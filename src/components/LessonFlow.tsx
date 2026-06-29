@@ -193,7 +193,7 @@ export default function LessonFlow({ lesson, progress, onComplete, onExit }: Pro
         <ComboMeter streak={run} />
       </div>
 
-      <QuizCard question={current} onAnswer={handleAnswer} onNext={next} />
+      <QuizCard key={current.id} question={current} onAnswer={handleAnswer} onNext={next} />
     </div>
   );
 }

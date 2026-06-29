@@ -124,7 +124,7 @@ export default function DrillFlow({
         <ComboMeter streak={run} />
       </div>
 
-      <QuizCard question={current} onAnswer={handleAnswer} onNext={next} />
+      <QuizCard key={pos} question={current} onAnswer={handleAnswer} onNext={next} />
     </div>
   );
 }
