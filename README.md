@@ -66,11 +66,33 @@ Required configuration in Vercel:
 * `NEXT_PUBLIC_SUPABASE_URL`: Supabase project connection string.
 * `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase client-safe public key.
 
-### Database Schema (Supabase)
+### Database Setup (Supabase)
+
+Run [`supabase/setup.sql`](./supabase/setup.sql) in the Supabase SQL Editor
+(Role: `postgres`) to provision a fresh project in one shot. It creates the
+tables, **grants the API roles access**, enables RLS with public read policies,
+and seeds starter scenarios.
+
+> **Important:** creating a table does *not* automatically give the `anon` /
+> `authenticated` API roles access to it. Without explicit
+> `GRANT SELECT ON public.<table> TO anon, authenticated;`, the Supabase client
+> returns `permission denied for table ...` (Postgres error `42501`) and the UI
+> shows **"No protocols found."** RLS policies alone are not sufficient — the
+> table-level GRANT is also required.
+
+#### Schema
 ```sql
+-- Scenarios: the corporate prompts shown to the user
+CREATE TABLE scenarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    track_name VARCHAR NOT NULL,
+    prompt_text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Profiles: Tracks progression, Elo, and the Elastic Streak
 CREATE TABLE profiles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_name VARCHAR DEFAULT 'Admin',
     elo_rating INT DEFAULT 1200,
     current_streak INT DEFAULT 0,
@@ -81,9 +103,10 @@ CREATE TABLE profiles (
 
 -- Vocabulary: The Graveyard/Arsenal tracking for Spaced Repetition
 CREATE TABLE vocabulary (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     basic_word VARCHAR NOT NULL,
     c2_upgrade VARCHAR NOT NULL,
     mastery_level INT DEFAULT 0, -- 0 = Graveyard, 3 = Arsenal
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+```

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase"; // Using our centralized, build-proof client
+import { supabase } from "@/lib/supabase";
+import { calculateHoursSince, determineStreakStatus } from "@/lib/streak";
 
 export async function GET(req: Request) {
   if (req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -10,20 +11,15 @@ export async function GET(req: Request) {
     const { data: profile } = await supabase.from('profiles').select('*').eq('user_name', 'Admin').single();
 
     if (profile) {
-      const lastCompleted = new Date(profile.last_completed_at).getTime();
-      const now = new Date().getTime();
-      const hoursSinceLastCompletion = (now - lastCompleted) / (1000 * 60 * 60);
+      const hoursSince = calculateHoursSince(profile.last_completed_at);
+      const auditResult = determineStreakStatus(hoursSince, profile.streak_status);
 
-      if (hoursSinceLastCompletion >= 48 && profile.streak_status !== 'broken') {
-        await supabase.from('profiles').update({
-          current_streak: 0,
-          streak_status: 'broken'
-        }).eq('user_name', 'Admin');
-      } 
-      else if (hoursSinceLastCompletion >= 24 && profile.streak_status === 'active') {
-        await supabase.from('profiles').update({
-          streak_status: 'fractured'
-        }).eq('user_name', 'Admin');
+      if (auditResult.status !== profile.streak_status) {
+        const updateData: Record<string, unknown> = { streak_status: auditResult.status };
+        if (auditResult.resetStreak) {
+          updateData.current_streak = 0;
+        }
+        await supabase.from('profiles').update(updateData).eq('user_name', 'Admin');
       }
     }
 
