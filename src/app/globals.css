@@ -2,23 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --cream: #fbf7f0;
+  --ink: #2b2433;
+}
+
+html,
 body {
-  background-color: #09090b;
-  color: #fafafa;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--cream);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Syntax Glow effects for dopamine-driven vocabulary rewards */
-.syntax-glow-success {
-  color: #34d399;
-  text-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
-  font-weight: 600;
+/* Prevent rubber-band / double-tap zoom for an app-like feel */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-.syntax-glow-warning {
-  color: #fbbf24;
-  text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
-  font-weight: 600;
+.bg-aurora {
+  background-image:
+    radial-gradient(60% 50% at 15% 0%, rgba(124, 77, 255, 0.14) 0%, transparent 60%),
+    radial-gradient(55% 45% at 100% 10%, rgba(242, 92, 42, 0.16) 0%, transparent 60%),
+    linear-gradient(180deg, #fffaf4 0%, var(--cream) 40%);
+}
+
+.combo-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  background-size: 200% 100%;
 }

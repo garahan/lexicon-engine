@@ -2,22 +2,23 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lexicon Engine",
-  description: "C2 Corporate English Mastery & Optimization",
+  title: "Ascend — English B1 → C2",
+  description:
+    "A grammar-led, spaced-repetition course that takes your English from B1 to C2 — one rewarding daily session at a time.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Lexicon",
+    statusBarStyle: "default",
+    title: "Ascend",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#09090b",
+  themeColor: "#fbf7f0",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false, 
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -27,8 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen bg-corporate-dark text-corporate-light">
-        <main className="max-w-md mx-auto min-h-screen border-x border-zinc-900 bg-black relative flex flex-col">
+      <body className="antialiased min-h-screen bg-cream text-ink">
+        <main className="max-w-md mx-auto min-h-screen bg-aurora relative flex flex-col shadow-soft">
           {children}
         </main>
       </body>
