@@ -1,89 +1,123 @@
-# Lexicon Engine 🚀
+# Ascend — English B1 → C2
 
-A high-intensity, dopamine-driven application engineered to shatter the intermediate (B1/B2) English plateau. Built for ambitious professionals transitioning into high-level technical advisory, strategic consulting, and executive roles, this engine forces the adoption of C2-level precision and corporate diplomacy.
+A grammar-led, spaced-repetition English course that takes you from **B1 to C2**, one short, rewarding daily session at a time. Ascend pairs proven learning science (active recall, spaced repetition, interleaving, mastery learning, weak-point targeting) with a dopamine-grade UX so coming back feels effortless instead of like a chore.
 
-## 1. The Vision & Philosophy
+> Single-user, runs entirely in the browser. All progress is saved to `localStorage` — no login, no backend required to learn.
 
-The gap between functional fluency (B2) and native-level, executive mastery (C2) cannot be bridged by traditional language learning methods. Standard apps rely on passive recognition, low-stakes multiple-choice questions, and generic scenarios (e.g., ordering coffee). 
+---
 
-To thrive in high-stakes corporate environments—whether diagnosing complex enterprise hardware failures, advising on macroeconomic shifts, or structuring energy policy—communication must be razor-sharp, devoid of filler, and syntactically flawless. 
+## What it does
 
-**The Lexicon Engine operates on three core principles:**
-1. **Deliberate Practice:** Forced active recall in hyper-specific, high-cognitive-load scenarios.
-2. **Strict Constraints:** Eliminating B1/B2 default vocabulary by forcing users to synthesize complex concepts within strict time or structural limits.
-3. **Dopamine-Driven Progression:** Hacking the brain's reward circuits using variable ratio rewards, visual micro-interactions, and loss aversion to replace mindless social media scrolling with high-yield linguistic training.
+Ascend is built around one tight, satisfying loop and a memory engine that makes what you learn actually stick.
 
-## 2. The Core Challenge (Why This Exists)
-* **The Procrastination Trap:** Language learning typically feels like a high-effort, low-reward grind. The dopamine release is delayed by months, leading to procrastination and eventual abandonment. 
-* **The "Good Enough" Plateau:** At B2, users can survive most conversations. The brain naturally conserves energy by defaulting to basic vocabulary (e.g., using "fix" instead of "rectify", or "look at" instead of "investigate"). Without a ruthless external auditor, advanced vocabulary is never internalized.
-* **The Solution:** A frictionless Progressive Web App (PWA) sitting directly on the mobile home screen. It leverages the "Zeigarnik Effect" (the psychological tension of incomplete patterns) via a high-stakes streak system to ensure daily engagement.
+**The lesson loop**
+1. **Learn** — a short, focused teaching card (the rule + clear examples; a passage for Reading lessons).
+2. **Quiz** — interleaved question types (multiple-choice, fill-in-the-blank, type-the-answer, and self-rated writing), ordered **adaptively** so your weaker concepts surface first.
+3. **Repeat weak items** — every miss is requeued and re-tested until you get it right, and becomes a spaced-repetition flashcard.
+4. **Mastery gate** — hit **85% on first tries** to master the lesson, earn XP, and unlock the next one.
 
-## 3. How It Works (The Core Loop)
+**The memory engine (Daily Review)**
+- Every missed item / new card enters a deck scheduled with the **SM-2** spaced-repetition algorithm.
+- Intervals grow when you recall and shrink when you miss, so reviews land right before you'd forget.
 
-1. **The Trigger:** The user opens the app from their home screen, entering instantly without menus or loading screens.
-2. **The High-Friction Task:** A daily, randomized corporate scenario is presented (e.g., *Explaining the latency mitigation of VLESS+Reality protocols to a non-technical stakeholder*).
-3. **The Active Output:** The user drafts a concise, professional response.
-4. **The Audit:** The Gemini 1.5 Flash AI evaluates the text strictly as an elite corporate communications advisor.
-5. **The Reward:** The UI visually "glows" as basic words are swapped for C2 upgrades. The user's Elo rating ticks up, and their daily streak is locked in.
+---
 
-## 4. Architectural Structure & Features
+## Phase 2 features
 
-### 4.1 The Elastic Streak System
-To build long-term discipline without the demoralizing effects of rigid habit trackers:
-* **Active State:** The user maintains a daily completion record.
-* **Fractured State:** If a day is missed, the streak is not immediately destroyed. It enters a "Fractured" state (glowing amber warning UI). 
-* **Restitution Protocol:** To repair a Fractured streak within 24 hours, the user must complete a significantly harder restitution challenge. If failed or ignored, the streak breaks completely.
+This build adds four major pillars on top of the Phase 1 learning loop:
 
-### 4.2 Elo Rating & Corporate Hierarchy
-Progress is tracked via a chess-style Elo rating (starting at 1200). 
-* **Analyst** (< 1300)
-* **Specialist** (1300 - 1499)
-* **Technical Expert** (1500 - 1799)
-* **Strategist / Advisory** (1800+)
-As Elo increases, the AI evaluator's strictness scales dynamically.
+### B · Placement test + checkpoints
+- A **12-question diagnostic** on first launch estimates your starting CEFR band (B1 → C2) and auto-unlocks the lessons below it, so the course meets you where you are.
+- **Checkpoints** unlock every 3 mastered lessons — a short assessment drawn from what you've learned. Passing (≥80%) confirms real progression and banks bonus XP.
 
-### 4.3 Vocabulary Graveyard (Future Roadmap)
-Basic words flagged by the AI are sent to the "Graveyard." Future iterations of the app will utilize Spaced Repetition (SRS) to actively force the user to deploy their C2 upgrades in subsequent prompts until they graduate to the "Arsenal."
+### C · Multi-track curriculum
+Four tracks, each an ordered ladder of CEFR-tagged lessons:
+- **Grammar** (the backbone): tenses, conditionals, articles, gerunds vs infinitives, relative clauses, inversion (C1), cleft & nominalisation (C2).
+- **Vocabulary**: strong adjectives, make/do collocations, precise verbs.
+- **Reading**: main idea, inference & tone (with passages).
+- **Writing**: linking ideas, opinion paragraphs — *compose → reveal model answer → self-rate against a checklist*.
 
-## 5. Technical Specifications
+### E · Stats dashboard
+A dedicated **Stats** tab with custom visualizations:
+- CEFR level ring + XP progress, overall accuracy, streak, lessons mastered, retention rate, best combo, active days.
+- **Mastery by concept** bars, an **accuracy trend** line, a **10-week activity heatmap**, a **weak-spot ranking**, and a **review forecast** for the next 7 days.
 
-### Tech Stack
-* **Frontend:** Next.js 14 (App Router), React 18, Tailwind CSS
-* **Backend:** Supabase (PostgreSQL) for user state and tracking
-* **AI Engine:** Google AI Studio (Gemini 1.5 Flash) via `@google/generative-ai` SDK
-* **Deployment:** Vercel (Edge network)
+### F · Adaptive difficulty + come-back modes
+- **Adaptive ordering** weights weak/unseen concepts to the front of every quiz and drill.
+- **Daily Challenge** — 6 questions, deterministic per day; a flawless run earns **2× bonus XP**.
+- **Quick Win** — 3 of your easiest items for a low-energy, ~2-minute confidence boost.
 
-### State Management & Variables
-The React frontend tracks several critical variables synchronized with Supabase:
-* `elo` (Integer): The user's current ranking score.
-* `streak` (Integer): Consecutive days of successful prompt completion.
-* `status` (String): Determines the UI state -> `'active'`, `'fractured'`, `'broken'`.
-* `result` (JSON Object): The AI's parsed response containing `score`, `feedback`, `upgraded_text`, and an array of `replaced_words`.
+---
 
-### Environment Variables
-Required configuration in Vercel:
-* `GEMINI_API_KEY`: Google Generative AI access key.
-* `NEXT_PUBLIC_SUPABASE_URL`: Supabase project connection string.
-* `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase client-safe public key.
+## Dopamine-grade UX
+- Instant tactile feedback on every answer (green flash, checkmark pop, point float, soft ding).
+- A glowing **combo meter** that builds a multiplier (capped ×4) as you chain correct answers.
+- Count-up XP, an animated CEFR **level ring**, confetti on level-up, and an end-of-session celebration screen.
+- A gentle **streak with a grace day** so one missed day doesn't punish you.
+- Mobile-first, calm warm palette, one task on screen at a time.
 
-### Database Schema (Supabase)
-```sql
--- Profiles: Tracks progression, Elo, and the Elastic Streak
-CREATE TABLE profiles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_name VARCHAR DEFAULT 'Admin',
-    elo_rating INT DEFAULT 1200,
-    current_streak INT DEFAULT 0,
-    max_streak INT DEFAULT 0,
-    streak_status VARCHAR DEFAULT 'active',
-    last_completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+---
 
--- Vocabulary: The Graveyard/Arsenal tracking for Spaced Repetition
-CREATE TABLE vocabulary (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    basic_word VARCHAR NOT NULL,
-    c2_upgrade VARCHAR NOT NULL,
-    mastery_level INT DEFAULT 0, -- 0 = Graveyard, 3 = Arsenal
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+## Navigation
+
+A persistent bottom nav with three tabs:
+- **Learn** — track selector, your next lesson, Daily Challenge / Quick Win, checkpoint, weak spots, and the full lesson list.
+- **Review** — your spaced-repetition deck (cards due today) plus the quick modes.
+- **Stats** — the full dashboard.
+
+---
+
+## Tech stack
+- **Next.js 14** (App Router) · **React 18** · **TypeScript** · **Tailwind CSS**
+- **Framer Motion** for animation; **lucide-react** icons
+- **Jest + ts-jest** for unit tests (pure logic modules are fully testable)
+- Progress persists to **`localStorage`** (single-user). No auth/backend needed to learn.
+
+> A legacy Supabase + Gemini path (`/api/evaluate`, `/api/cron`) remains in the repo from the earlier corporate-eval app and is not used by the Ascend learning loop. Live AI grading of writing is reserved for a future phase.
+
+### Project structure
+```
+src/
+  app/page.tsx              Tabs, placement gate, drills, checkpoints
+  components/               LessonFlow, DrillFlow, QuizCard, ReviewView,
+                            PlacementTest, StatsView, Celebration, ComboMeter, …
+  lib/
+    curriculum/             Multi-track content (grammar, vocabulary, reading, writing)
+    mastery.ts              XP, CEFR ladder, combo, weak-point ranking
+    srs.ts                  SM-2 spaced-repetition scheduler
+    placement.ts            Diagnostic questions + scoring
+    adaptive.ts             Adaptive ordering, Daily Challenge, Quick Win
+    stats.ts                Dashboard aggregation (mastery, trend, heatmap, forecast)
+    progress.ts             Progress state + persistence helpers
+    useProgress.ts          React hook wrapping progress state
+```
+
+---
+
+## Getting started
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+```
+
+On first launch you'll take the placement test. After that, jump into a lesson, build a streak, and watch your Stats fill in.
+
+### Scripts
+```bash
+npm run dev        # start the dev server
+npm run build      # production build
+npm run lint       # eslint
+npm run test       # jest unit tests
+npx tsc --noEmit   # typecheck
+```
+
+### Resetting progress
+Progress lives in `localStorage`. To start fresh, clear site data in your browser (or call the `hardReset()` exposed by `useProgress`).
+
+---
+
+## Roadmap
+- **Phase 1** ✅ — grammar-led learning loop, SM-2 Daily Review, XP + CEFR ring + streak, dopamine UX.
+- **Phase 2** ✅ — placement + checkpoints, multi-track curriculum, Stats dashboard, adaptive difficulty + Daily Challenge + Quick Win.
+- **Next** — user accounts + cloud sync (progress follows you across devices), live AI-graded writing with inline "your phrasing → upgrade" diffs, email come-back reminders, and a larger B1→C2 content library.

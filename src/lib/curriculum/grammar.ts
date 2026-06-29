@@ -1,79 +1,10 @@
-/**
- * Grammar-track curriculum (Phase 1).
- *
- * Pre-authored, level-banded lessons so the core learning loop is fast,
- * deterministic and doesn't depend on live AI generation / quota. Each lesson
- * teaches one concept then tests it with interleaved question types (MCQ,
- * cloze, typed). Every question can spawn a spaced-repetition flashcard.
- */
-import type { CefrLevel } from "./mastery";
-
-export type QuestionType = "mcq" | "cloze" | "type";
-
-export interface Question {
-  id: string;
-  type: QuestionType;
-  /** Concept tag used for weak-point grouping. */
-  concept: string;
-  /** Sentence or instruction. Blanks are written as "___". */
-  prompt: string;
-  /** Options for multiple-choice questions. */
-  choices?: string[];
-  /** Canonical correct answer. */
-  answer: string;
-  /** Extra accepted answers for typed/cloze (compared case-insensitively). */
-  accept?: string[];
-  /** One-line "why" shown after answering. */
-  explanation: string;
-  /** Flashcard front/back generated for spaced repetition. */
-  flashFront: string;
-  flashBack: string;
-}
-
-export interface LessonTeach {
-  intro: string;
-  points: string[];
-  examples: { text: string; note?: string }[];
-}
-
-export interface Lesson {
-  id: string;
-  level: CefrLevel;
-  order: number;
-  title: string;
-  concept: string;
-  /** Short subtitle shown on the lesson card. */
-  blurb: string;
-  teach: LessonTeach;
-  questions: Question[];
-}
-
-export interface Track {
-  id: string;
-  name: string;
-  lessons: Lesson[];
-}
-
-/** Normalise a free-text answer for forgiving comparison. */
-function normalize(s: string): string {
-  return s
-    .trim()
-    .toLowerCase()
-    .replace(/[.,!?;:]+$/g, "")
-    .replace(/\s+/g, " ");
-}
-
-/** Whether a user's answer matches a question's canonical/accepted answers. */
-export function checkAnswer(question: Question, userAnswer: string): boolean {
-  const candidate = normalize(userAnswer);
-  if (candidate.length === 0) return false;
-  const accepted = [question.answer, ...(question.accept ?? [])].map(normalize);
-  return accepted.includes(candidate);
-}
+import type { Track } from "./types";
 
 export const GRAMMAR_TRACK: Track = {
   id: "grammar",
   name: "Grammar",
+  tagline: "The backbone — structures B1 → C2.",
+  icon: "Blocks",
   lessons: [
     {
       id: "g1",
@@ -538,6 +469,199 @@ export const GRAMMAR_TRACK: Track = {
           explanation: "Possessive relative pronoun → 'whose'.",
           flashFront: "Possessive relative pronoun?",
           flashBack: "whose — 'the author whose book…'.",
+        },
+      ],
+    },
+    {
+      id: "g6",
+      level: "C1",
+      order: 6,
+      title: "Inversion for Emphasis",
+      concept: "inversion",
+      blurb: "Negative adverbials that flip subject and auxiliary.",
+      teach: {
+        intro:
+          "When a negative or limiting adverbial starts a sentence for emphasis, English inverts the subject and auxiliary, just like a question. This is a hallmark of formal, advanced style.",
+        points: [
+          "Triggers: Never, Rarely, Seldom, Hardly, No sooner … than, Not only … but also, Little, Only then.",
+          "Form: adverbial + auxiliary + subject + main verb.",
+          "If there's no auxiliary, add 'do/does/did': 'Never did I imagine…'.",
+          "'No sooner had I … than …' and 'Hardly had I … when …' are fixed patterns.",
+        ],
+        examples: [
+          { text: "Never have I seen such a mess.", note: "Never + have + I…" },
+          { text: "No sooner had we left than it rained.", note: "fixed 'No sooner … than'" },
+          { text: "Not only is she clever, but she is also kind.", note: "Not only + is + she" },
+        ],
+      },
+      questions: [
+        {
+          id: "g6q1",
+          type: "mcq",
+          concept: "inversion",
+          prompt: "Never ___ such a beautiful sunset.",
+          choices: ["I have seen", "have I seen", "I saw", "did I saw"],
+          answer: "have I seen",
+          explanation: "After a fronted 'Never', invert auxiliary and subject: have I seen.",
+          flashFront: "'Never ___ such…' — word order?",
+          flashBack: "Invert: 'Never have I seen such…'",
+        },
+        {
+          id: "g6q2",
+          type: "mcq",
+          concept: "inversion",
+          prompt: "___ had I sat down than the phone rang.",
+          choices: ["No sooner", "Hardly", "Rarely", "Seldom"],
+          answer: "No sooner",
+          explanation: "'No sooner … than' is the fixed pair; 'Hardly … when'.",
+          flashFront: "'___ had I sat down than…' — which adverbial?",
+          flashBack: "No sooner … than (Hardly … when).",
+        },
+        {
+          id: "g6q3",
+          type: "type",
+          concept: "inversion",
+          prompt: "Add the auxiliary: 'Little ___ he know the truth.' (one word)",
+          answer: "did",
+          explanation: "With no existing auxiliary, add 'did': 'Little did he know'.",
+          flashFront: "'Little ___ he know' — auxiliary?",
+          flashBack: "did — 'Little did he know'.",
+        },
+        {
+          id: "g6q4",
+          type: "mcq",
+          concept: "inversion",
+          prompt: "Which sentence is correct?",
+          choices: [
+            "Only then I understood the problem.",
+            "Only then did I understand the problem.",
+            "Only then understood I the problem.",
+            "Only then I did understand the problem.",
+          ],
+          answer: "Only then did I understand the problem.",
+          explanation: "'Only then' triggers inversion with 'did' + subject + base verb.",
+          flashFront: "'Only then ___ I understand' — form?",
+          flashBack: "Only then did I understand…",
+        },
+        {
+          id: "g6q5",
+          type: "cloze",
+          concept: "inversion",
+          prompt: "Rewrite the start: Not only ___ (be) he late, but he also forgot the tickets.",
+          answer: "was",
+          explanation: "'Not only' fronted → invert: 'Not only was he late…'.",
+          flashFront: "'Not only ___ he late' — verb position?",
+          flashBack: "Invert: 'Not only was he late…'",
+        },
+        {
+          id: "g6q6",
+          type: "mcq",
+          concept: "inversion",
+          prompt: "Rarely ___ a politician admit a mistake so openly.",
+          choices: ["does", "do", "is", "has"],
+          answer: "does",
+          explanation: "'Rarely' + inversion; singular subject → 'does' + base verb.",
+          flashFront: "'Rarely ___ a politician admit…' — auxiliary?",
+          flashBack: "does — 'Rarely does a politician admit…'",
+        },
+      ],
+    },
+    {
+      id: "g7",
+      level: "C2",
+      order: 7,
+      title: "Cleft & Nominalisation",
+      concept: "cleft-sentences",
+      blurb: "Reshaping clauses for focus and an academic register.",
+      teach: {
+        intro:
+          "Cleft sentences split one idea into two clauses to focus a specific element ('It was X that…', 'What I need is…'). Nominalisation turns verbs/adjectives into nouns for a denser, more formal register.",
+        points: [
+          "It-cleft: 'It was the noise that woke me.' (focus = the noise)",
+          "Wh-cleft: 'What surprised me was his calm.' (focus comes after 'was')",
+          "Nominalisation: 'They decided quickly' → 'Their quick decision…'.",
+          "Nominalised style is typical of academic and formal writing.",
+        ],
+        examples: [
+          { text: "It was patience that solved it.", note: "it-cleft focuses 'patience'" },
+          { text: "What he wants is recognition.", note: "wh-cleft focuses 'recognition'" },
+          { text: "The implementation of the policy failed.", note: "nominalised 'implement'" },
+        ],
+      },
+      questions: [
+        {
+          id: "g7q1",
+          type: "mcq",
+          concept: "cleft-sentences",
+          prompt: "Focus 'her support': ___ that helped me most.",
+          choices: ["It was her support", "What her support", "There was her support", "Her support it was"],
+          answer: "It was her support",
+          explanation: "It-cleft: 'It was [focus] that…'.",
+          flashFront: "It-cleft pattern to focus a noun?",
+          flashBack: "'It was [X] that…' — 'It was her support that helped.'",
+        },
+        {
+          id: "g7q2",
+          type: "mcq",
+          concept: "cleft-sentences",
+          prompt: "Complete the wh-cleft: ___ is a clear plan.",
+          choices: [
+            "What we need",
+            "That we need",
+            "It we need",
+            "Which we need",
+          ],
+          answer: "What we need",
+          explanation: "Wh-cleft starts with 'What …' and puts the focus after 'is'.",
+          flashFront: "Wh-cleft opener?",
+          flashBack: "'What … is …' — 'What we need is a clear plan.'",
+        },
+        {
+          id: "g7q3",
+          type: "type",
+          concept: "cleft-sentences",
+          prompt: "Nominalise 'decide': Use the noun — 'Their ___ to expand was bold.'",
+          answer: "decision",
+          explanation: "Verb 'decide' → noun 'decision' for a nominalised, formal style.",
+          flashFront: "Noun form of 'decide'?",
+          flashBack: "decision — 'their decision to expand'.",
+        },
+        {
+          id: "g7q4",
+          type: "mcq",
+          concept: "cleft-sentences",
+          prompt: "Which is a correctly nominalised, formal version of 'because prices rose'?",
+          choices: [
+            "due to the rise in prices",
+            "because prices were rising up",
+            "as prices they rose",
+            "for the reason prices rose",
+          ],
+          answer: "due to the rise in prices",
+          explanation: "Nominalisation turns the clause into a noun phrase: 'the rise in prices'.",
+          flashFront: "Nominalise 'because prices rose'?",
+          flashBack: "'due to the rise in prices'.",
+        },
+        {
+          id: "g7q5",
+          type: "cloze",
+          concept: "cleft-sentences",
+          prompt: "It-cleft for time: 'It ___ in 1990 that the company was founded.' (one word)",
+          answer: "was",
+          explanation: "It-cleft uses 'It was … that …' even for time references.",
+          flashFront: "It-cleft verb: 'It ___ in 1990 that…'?",
+          flashBack: "was — 'It was in 1990 that…'.",
+        },
+        {
+          id: "g7q6",
+          type: "mcq",
+          concept: "cleft-sentences",
+          prompt: "Reverse wh-cleft: 'A holiday is ___ she really needs.'",
+          choices: ["what", "that", "which", "it"],
+          answer: "what",
+          explanation: "Reverse wh-cleft puts focus first: '[X] is what …'.",
+          flashFront: "'A holiday is ___ she needs' — relative word?",
+          flashBack: "what — '… is what she needs'.",
         },
       ],
     },
