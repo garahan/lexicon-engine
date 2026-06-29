@@ -1,13 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase"; // Using our centralized, build-proof client
 
-// Initialize APIs
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-);
 
 export async function POST(req: Request) {
   try {
@@ -41,8 +36,6 @@ export async function POST(req: Request) {
     textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(textResponse);
 
-    // --- SUPABASE INTEGRATION ---
-    // 1. Fetch your current profile
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
@@ -50,12 +43,10 @@ export async function POST(req: Request) {
       .single();
 
     if (profile) {
-      // Calculate new stats (Score/10 adds to Elo)
       const newElo = profile.elo_rating + Math.floor(parsedData.score / 10);
       const newStreak = profile.current_streak + 1;
       const maxStreak = Math.max(profile.max_streak, newStreak);
 
-      // 2. Update profile
       await supabase.from('profiles').update({
         elo_rating: newElo,
         current_streak: newStreak,
@@ -68,7 +59,6 @@ export async function POST(req: Request) {
       parsedData.new_streak = newStreak;
     }
 
-    // 3. Log basic words to the Vocabulary Graveyard
     if (parsedData.replaced_words && parsedData.replaced_words.length > 0) {
       const vocabInserts = parsedData.replaced_words.map((w: any) => ({
         basic_word: w.basic,
