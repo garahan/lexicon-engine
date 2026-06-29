@@ -17,7 +17,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false, // Prevents annoying zoom on double-tap
+  userScalable: false, 
 };
 
 export default function RootLayout({
@@ -28,12 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen bg-corporate-dark text-corporate-light">
-        {/* We restrict the width to simulate a phone screen, even on desktop */}
         <main className="max-w-md mx-auto min-h-screen border-x border-zinc-900 bg-black relative flex flex-col">
           {children}
         </main>
       </body>
     </html>
   );
-}  );
 }
