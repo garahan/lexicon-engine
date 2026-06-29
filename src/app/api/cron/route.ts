@@ -1,34 +1,30 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase"; // Using our centralized, build-proof client
+import { getAdminProfile, updateAdminProfile } from "@/lib/profile";
+import { getHoursSinceCompletion, determineStreakTransition } from "@/lib/streak";
+import { errorResponse, successResponse } from "@/lib/api";
+import { StreakStatus } from "@/lib/constants";
 
 export async function GET(req: Request) {
   if (req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return errorResponse('Unauthorized', 401);
   }
 
   try {
-    const { data: profile } = await supabase.from('profiles').select('*').eq('user_name', 'Admin').single();
+    const profile = await getAdminProfile();
 
     if (profile) {
-      const lastCompleted = new Date(profile.last_completed_at).getTime();
-      const now = new Date().getTime();
-      const hoursSinceLastCompletion = (now - lastCompleted) / (1000 * 60 * 60);
+      const hoursSince = getHoursSinceCompletion(profile.last_completed_at);
+      const transition = determineStreakTransition(
+        hoursSince,
+        profile.streak_status as StreakStatus
+      );
 
-      if (hoursSinceLastCompletion >= 48 && profile.streak_status !== 'broken') {
-        await supabase.from('profiles').update({
-          current_streak: 0,
-          streak_status: 'broken'
-        }).eq('user_name', 'Admin');
-      } 
-      else if (hoursSinceLastCompletion >= 24 && profile.streak_status === 'active') {
-        await supabase.from('profiles').update({
-          streak_status: 'fractured'
-        }).eq('user_name', 'Admin');
+      if (transition) {
+        await updateAdminProfile(transition);
       }
     }
 
-    return NextResponse.json({ success: true, message: "Streak audit complete." });
-  } catch (error) {
-    return NextResponse.json({ error: "Audit failed" }, { status: 500 });
+    return successResponse({ success: true, message: "Streak audit complete." });
+  } catch {
+    return errorResponse("Audit failed", 500);
   }
 }
