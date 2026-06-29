@@ -1,37 +1,30 @@
-const fetchRandomScenario = async () => {
-    setScenarioText("Decrypting next protocol...");
-    try {
-      const { data, error } = await supabase.from('scenarios').select('*');
-      
-      if (error) {
-        console.error("Supabase Error:", error);
-        setScenarioText("Error loading protocols. Check Supabase RLS settings.");
-        return;
-      }
+"use client";
 
-      if (data && data.length > 0) {
-        const randomPrompt = data[Math.floor(Math.random() * data.length)];
-        setScenarioText(randomPrompt.prompt_text);
-        setTrackName(randomPrompt.track_name);
-      } else {
-        setScenarioText("No protocols found in database.");
-      }
-    } catch (e) {
-      setScenarioText("Connection failed.");
-    }
-  };
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+export default function Home() {
+  const [scenarioText, setScenarioText] = useState("Loading...");
 
   useEffect(() => {
-    async function loadStats() {
-      // We use a safe query
-      const { data, error } = await supabase.from('profiles').select('*').eq('user_name', 'Admin').single();
-      if (data) {
-        setElo(data.elo_rating);
-        setStreak(data.current_streak);
-        setStatus(data.streak_status);
+    async function load() {
+      const { data } = await supabase.from('scenarios').select('*');
+      if (data && data.length > 0) {
+        const random = data[Math.floor(Math.random() * data.length)];
+        setScenarioText(random.prompt_text);
+      } else {
+        setScenarioText("No protocols found.");
       }
     }
-    loadStats();
-    // Delay the scenario fetch slightly to ensure DB connection is warm
-    setTimeout(fetchRandomScenario, 1000); 
+    load();
   }, []);
+
+  return (
+    <div className="flex flex-col h-full p-5 text-white">
+      <h1 className="text-xl font-bold mb-4">Lexicon Engine</h1>
+      <div className="p-4 bg-zinc-900 rounded-lg">
+        <p className="text-sm">{scenarioText}</p>
+      </div>
+    </div>
+  );
+}
