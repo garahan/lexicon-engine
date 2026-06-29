@@ -1,6 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase"; // Using our centralized, build-proof client
+import { getAdminProfile, updateAdminProfile } from "@/lib/profile";
+import { calculateNewElo } from "@/lib/elo";
+import { parseGeminiResponse } from "@/lib/gemini";
+import { insertReplacedWords } from "@/lib/vocabulary";
+import { errorResponse, successResponse } from "@/lib/api";
+import { STREAK_STATUS } from "@/lib/constants";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -9,7 +13,7 @@ export async function POST(req: Request) {
     const { text, scenario } = await req.json();
 
     if (!text) {
-      return NextResponse.json({ error: "No text provided" }, { status: 400 });
+      return errorResponse("No text provided", 400);
     }
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -32,48 +36,35 @@ export async function POST(req: Request) {
     User's Text to Evaluate: "${text}"`;
 
     const result = await model.generateContent(prompt);
-    let textResponse = result.response.text();
-    textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsedData = JSON.parse(textResponse);
+    const parsedData = parseGeminiResponse(result.response.text());
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_name', 'Admin')
-      .single();
+    const profile = await getAdminProfile();
 
     if (profile) {
-      const newElo = profile.elo_rating + Math.floor(parsedData.score / 10);
+      const newElo = calculateNewElo(profile.elo_rating, parsedData.score);
       const newStreak = profile.current_streak + 1;
       const maxStreak = Math.max(profile.max_streak, newStreak);
 
-      await supabase.from('profiles').update({
+      await updateAdminProfile({
         elo_rating: newElo,
         current_streak: newStreak,
         max_streak: maxStreak,
-        streak_status: 'active',
-        last_completed_at: new Date().toISOString()
-      }).eq('user_name', 'Admin');
+        streak_status: STREAK_STATUS.ACTIVE,
+        last_completed_at: new Date().toISOString(),
+      });
 
       parsedData.new_elo = newElo;
       parsedData.new_streak = newStreak;
     }
 
     if (parsedData.replaced_words && parsedData.replaced_words.length > 0) {
-      const vocabInserts = parsedData.replaced_words.map((w: any) => ({
-        basic_word: w.basic,
-        c2_upgrade: w.advanced
-      }));
-      await supabase.from('vocabulary').insert(vocabInserts);
+      await insertReplacedWords(parsedData.replaced_words);
     }
 
-    return NextResponse.json(parsedData);
+    return successResponse(parsedData);
 
   } catch (error) {
     console.error("Evaluation Error:", error);
-    return NextResponse.json(
-      { error: "Failed to analyze syntax. Check API logs." },
-      { status: 500 }
-    );
+    return errorResponse("Failed to analyze syntax. Check API logs.", 500);
   }
 }
