@@ -1,8 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-// Initialize the Gemini API using the environment variable you set in Vercel
+// Initialize APIs
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+);
 
 export async function POST(req: Request) {
   try {
@@ -12,11 +17,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No text provided" }, { status: 400 });
     }
 
-    // We use the 1.5 Flash model because it is lightning-fast for text evaluation
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // The strict persona and formatting instructions
-    const prompt = `You are a ruthless, elite corporate communications advisor. Your client is transitioning from B2 to C2 English. 
+    const prompt = `You are a ruthless, elite corporate communications advisor evaluating a candidate for a technical advisory or consulting role. 
     They have provided a text response to the following scenario: "${scenario}".
     
     Evaluate their text strictly for C2-level vocabulary, executive diplomacy, and syntactical precision. Eliminate fluff.
@@ -34,13 +37,45 @@ export async function POST(req: Request) {
     User's Text to Evaluate: "${text}"`;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let textResponse = response.text();
-    
-    // Clean up any potential markdown formatting Gemini might try to add
+    let textResponse = result.response.text();
     textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-
     const parsedData = JSON.parse(textResponse);
+
+    // --- SUPABASE INTEGRATION ---
+    // 1. Fetch your current profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_name', 'Admin')
+      .single();
+
+    if (profile) {
+      // Calculate new stats (Score/10 adds to Elo)
+      const newElo = profile.elo_rating + Math.floor(parsedData.score / 10);
+      const newStreak = profile.current_streak + 1;
+      const maxStreak = Math.max(profile.max_streak, newStreak);
+
+      // 2. Update profile
+      await supabase.from('profiles').update({
+        elo_rating: newElo,
+        current_streak: newStreak,
+        max_streak: maxStreak,
+        streak_status: 'active',
+        last_completed_at: new Date().toISOString()
+      }).eq('user_name', 'Admin');
+
+      parsedData.new_elo = newElo;
+      parsedData.new_streak = newStreak;
+    }
+
+    // 3. Log basic words to the Vocabulary Graveyard
+    if (parsedData.replaced_words && parsedData.replaced_words.length > 0) {
+      const vocabInserts = parsedData.replaced_words.map((w: any) => ({
+        basic_word: w.basic,
+        c2_upgrade: w.advanced
+      }));
+      await supabase.from('vocabulary').insert(vocabInserts);
+    }
 
     return NextResponse.json(parsedData);
 
