@@ -19,8 +19,20 @@ export default function QuizCard({ question, onAnswer, onNext }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [correct, setCorrect] = useState(false);
   const [xpGain, setXpGain] = useState(0);
+  const [revealed, setRevealed] = useState(false);
 
   const isChoice = question.type === "mcq";
+  const isWriting = question.type === "writing";
+
+  function gradeSelfRated(ok: boolean) {
+    if (submitted) return;
+    const xp = onAnswer(ok);
+    setCorrect(ok);
+    setXpGain(xp);
+    setSubmitted(true);
+    if (ok) playCorrect();
+    else playWrong();
+  }
 
   function grade(answer: string) {
     if (submitted) return;
@@ -34,6 +46,113 @@ export default function QuizCard({ question, onAnswer, onNext }: Props) {
   }
 
   const canSubmit = isChoice ? selected !== null : value.trim().length > 0;
+
+  if (isWriting) {
+    return (
+      <motion.div
+        key={question.id}
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 220, damping: 22 }}
+        className="flex flex-col gap-5"
+      >
+        <p className="text-[11px] font-bold uppercase tracking-wider text-grape-500">
+          Write your answer
+        </p>
+        <h2 className="text-xl font-bold leading-snug text-ink">{question.prompt}</h2>
+
+        <textarea
+          autoFocus
+          value={value}
+          disabled={revealed}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Compose a few sentences…"
+          rows={5}
+          className={`w-full resize-none rounded-2xl border-2 bg-white px-4 py-3.5 text-base font-medium leading-relaxed outline-none transition-colors ${
+            revealed ? "border-black/10 opacity-70" : "border-black/10 focus:border-grape-500"
+          }`}
+        />
+
+        {!revealed ? (
+          <button
+            disabled={!canSubmit}
+            onClick={() => setRevealed(true)}
+            className="w-full rounded-2xl bg-grape-500 py-3.5 text-base font-bold text-white shadow-soft transition-all active:scale-[0.98] disabled:opacity-40"
+          >
+            Reveal model answer
+          </button>
+        ) : (
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col gap-4"
+            >
+              <div className="rounded-2xl bg-cream px-4 py-3">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-grape-500">
+                  Model answer
+                </p>
+                <p className="mt-1 text-[15px] leading-relaxed text-ink/85">{question.model}</p>
+              </div>
+
+              {question.checklist && (
+                <div className="rounded-2xl bg-white px-4 py-3 shadow-soft">
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-ink/50">
+                    Did your answer…
+                  </p>
+                  <ul className="flex flex-col gap-1.5">
+                    {question.checklist.map((c, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-ink/80">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-mint-500" />
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {!submitted ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-center text-sm font-semibold text-ink/60">
+                    Honestly, how did you do?
+                  </p>
+                  <div className="flex gap-2.5">
+                    <button
+                      onClick={() => gradeSelfRated(false)}
+                      className="flex-1 rounded-2xl border-2 border-black/10 bg-white py-3 text-sm font-bold text-ink/70 transition-all active:scale-[0.97]"
+                    >
+                      Missed some
+                    </button>
+                    <button
+                      onClick={() => gradeSelfRated(true)}
+                      className="flex-1 rounded-2xl bg-mint-500 py-3 text-sm font-bold text-white shadow-soft transition-all active:scale-[0.97]"
+                    >
+                      Nailed it
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className={`relative rounded-2xl p-4 ${correct ? "bg-mint-400/15" : "bg-brand-50"}`}>
+                  <p className={`font-bold ${correct ? "text-mint-600" : "text-brand-600"}`}>
+                    {correct ? "Great — banked it!" : "Noted — we'll revisit this."}
+                  </p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink/70">{question.explanation}</p>
+                  <button
+                    onClick={onNext}
+                    className={`mt-3 w-full rounded-2xl py-3 text-base font-bold text-white shadow-soft transition-all active:scale-[0.98] ${
+                      correct ? "bg-mint-500" : "bg-brand-500"
+                    }`}
+                  >
+                    Continue
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

@@ -1,5 +1,5 @@
 export interface SessionSummary {
-  kind: "lesson" | "review";
+  kind: "lesson" | "review" | "challenge" | "quickwin" | "checkpoint";
   title: string;
   xpGained: number;
   firstTryCorrect: number;

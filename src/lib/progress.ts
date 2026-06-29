@@ -20,6 +20,13 @@ export interface ConceptStat {
   total: number;
 }
 
+/** Per-day activity used to build trend lines and the review heatmap. */
+export interface DayActivity {
+  answers: number;
+  correct: number;
+  xp: number;
+}
+
 export interface ProgressState {
   version: number;
   xp: number;
@@ -35,6 +42,14 @@ export interface ProgressState {
   graceUsed: boolean;
   totalAnswers: number;
   bestCombo: number;
+  /** Whether the placement diagnostic has been taken. */
+  placementDone: boolean;
+  /** CEFR band suggested by placement (display only). */
+  placementLevel: string | null;
+  /** Per-day activity history keyed by YYYY-MM-DD (for stats). */
+  history: Record<string, DayActivity>;
+  /** Number of completed checkpoint assessments. */
+  checkpointsPassed: number;
 }
 
 export const PROGRESS_VERSION = 1;
@@ -52,6 +67,10 @@ export function createInitialProgress(): ProgressState {
     graceUsed: false,
     totalAnswers: 0,
     bestCombo: 0,
+    placementDone: false,
+    placementLevel: null,
+    history: {},
+    checkpointsPassed: 0,
   };
 }
 
@@ -110,6 +129,24 @@ export function recordConcept(
     [concept]: {
       correct: cur.correct + (correct ? 1 : 0),
       total: cur.total + 1,
+    },
+  };
+}
+
+/** Accumulate one answer into the per-day activity history (immutably). */
+export function recordHistory(
+  history: Record<string, DayActivity>,
+  correct: boolean,
+  xp: number,
+  day: string = dayKey(),
+): Record<string, DayActivity> {
+  const cur = history[day] ?? { answers: 0, correct: 0, xp: 0 };
+  return {
+    ...history,
+    [day]: {
+      answers: cur.answers + 1,
+      correct: cur.correct + (correct ? 1 : 0),
+      xp: cur.xp + xp,
     },
   };
 }
