@@ -8,7 +8,14 @@ export default function Home() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase.from('scenarios').select('*');
+      const { data, error } = await supabase.from('scenarios').select('*');
+
+      if (error) {
+        console.error("Failed to load scenarios:", error.message);
+        setScenarioText("Failed to load scenarios. Please try again later.");
+        return;
+      }
+
       if (data && data.length > 0) {
         const random = data[Math.floor(Math.random() * data.length)];
         setScenarioText(random.prompt_text);
