@@ -7,6 +7,7 @@ import {
   type ConceptStat,
   createInitialProgress,
   recordConcept,
+  recordHistory,
   upsertFlashcard,
   gradeFlashcard,
   markLessonComplete,
@@ -46,7 +47,19 @@ export interface ProgressApi {
   completeLesson: (lessonId: string) => void;
   gradeCard: (id: string, grade: ReviewGrade) => void;
   registerActivity: () => void;
+  applyPlacement: (input: PlacementResult) => void;
+  passCheckpoint: () => void;
+  awardXp: (amount: number) => void;
   hardReset: () => void;
+}
+
+export interface PlacementResult {
+  /** CEFR band label suggested by the diagnostic. */
+  level: string;
+  /** XP to seed so the level ring starts at the right band. */
+  startXp: number;
+  /** Lesson ids below the placed level to mark as already cleared. */
+  clearedLessonIds: string[];
 }
 
 export function useProgress(): ProgressApi {
@@ -80,6 +93,7 @@ export function useProgress(): ProgressApi {
         totalAnswers: s.totalAnswers + 1,
         bestCombo: Math.max(s.bestCombo, input.comboStreak),
         conceptStats,
+        history: recordHistory(s.history, input.correct, input.xp),
       };
     });
   }, []);
@@ -117,6 +131,39 @@ export function useProgress(): ProgressApi {
     });
   }, []);
 
+  const applyPlacement = useCallback((input: PlacementResult) => {
+    setState((s) => {
+      let completed = s.completedLessons;
+      for (const id of input.clearedLessonIds) {
+        completed = markLessonComplete({ ...s, completedLessons: completed }, id);
+      }
+      return {
+        ...s,
+        placementDone: true,
+        placementLevel: input.level,
+        xp: Math.max(s.xp, input.startXp),
+        completedLessons: completed,
+      };
+    });
+  }, []);
+
+  const passCheckpoint = useCallback(() => {
+    setState((s) => ({ ...s, checkpointsPassed: s.checkpointsPassed + 1 }));
+  }, []);
+
+  const awardXp = useCallback((amount: number) => {
+    if (amount <= 0) return;
+    setState((s) => {
+      const day = dayKey();
+      const cur = s.history[day] ?? { answers: 0, correct: 0, xp: 0 };
+      return {
+        ...s,
+        xp: s.xp + amount,
+        history: { ...s.history, [day]: { ...cur, xp: cur.xp + amount } },
+      };
+    });
+  }, []);
+
   const hardReset = useCallback(() => {
     setState(createInitialProgress());
   }, []);
@@ -129,6 +176,9 @@ export function useProgress(): ProgressApi {
     completeLesson,
     gradeCard,
     registerActivity,
+    applyPlacement,
+    passCheckpoint,
+    awardXp,
     hardReset,
   };
 }

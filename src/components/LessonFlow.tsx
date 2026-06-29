@@ -8,6 +8,7 @@ import { BASE_XP, comboMultiplier, accuracy, MASTERY_THRESHOLD } from "@/lib/mas
 import { makeFlashcard } from "@/lib/progress";
 import type { ProgressApi } from "@/lib/useProgress";
 import { bonusMultiplier } from "@/lib/mastery";
+import { adaptiveOrder } from "@/lib/adaptive";
 import QuizCard from "./QuizCard";
 import ComboMeter from "./ComboMeter";
 import type { SessionSummary } from "./session";
@@ -25,7 +26,11 @@ const baseId = (id: string) => id.split("#")[0];
 
 export default function LessonFlow({ lesson, progress, onComplete, onExit }: Props) {
   const [phase, setPhase] = useState<Phase>("learn");
-  const [queue, setQueue] = useState<Question[]>(lesson.questions);
+  // Order questions adaptively once at mount: weak/unseen concepts surface
+  // earlier. Computed lazily so the queue doesn't reshuffle as stats update.
+  const [queue, setQueue] = useState<Question[]>(() =>
+    adaptiveOrder(lesson.questions, progress.state.conceptStats),
+  );
   const [pos, setPos] = useState(0);
   const [run, setRun] = useState(0);
   const [xpGained, setXpGained] = useState(0);
@@ -122,6 +127,16 @@ export default function LessonFlow({ lesson, progress, onComplete, onExit }: Pro
             </span>
           </div>
           <h1 className="text-2xl font-extrabold text-ink">{lesson.title}</h1>
+
+          {lesson.passage && (
+            <div className="mt-4 rounded-2xl border border-grape-400/20 bg-cream px-4 py-3">
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-grape-500">
+                Read this
+              </p>
+              <p className="text-[15px] leading-relaxed text-ink/80">{lesson.passage}</p>
+            </div>
+          )}
+
           <p className="mt-3 text-[15px] leading-relaxed text-ink/75">{lesson.teach.intro}</p>
 
           <ul className="mt-4 flex flex-col gap-2">
