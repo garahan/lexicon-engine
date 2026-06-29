@@ -1,14 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Flame, Activity, Crosshair, ArrowRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
+  
+  // Real database stats state
+  const [elo, setElo] = useState(1200);
+  const [streak, setStreak] = useState(0);
+  const [status, setStatus] = useState("active");
 
   const scenarioText = "A flagship device is experiencing anomalous kernel panics under specific software loads. Draft a concise executive summary for the engineering team detailing the diagnostic steps required to isolate the logic board.";
+
+  // Fetch stats when app opens
+  useEffect(() => {
+    async function loadStats() {
+      const { data } = await supabase.from('profiles').select('*').eq('user_name', 'Admin').single();
+      if (data) {
+        setElo(data.elo_rating);
+        setStreak(data.current_streak);
+        setStatus(data.streak_status);
+      }
+    }
+    loadStats();
+  }, []);
 
   const handleAnalyze = async () => {
     if (!inputText.trim()) return;
@@ -18,16 +37,18 @@ export default function Home() {
       const response = await fetch("/api/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: inputText,
-          scenario: scenarioText
-        }),
+        body: JSON.stringify({ text: inputText, scenario: scenarioText }),
       });
 
       if (!response.ok) throw new Error("Network response was not ok");
       
       const data = await response.json();
       setResult(data);
+      
+      // Update UI instantly with new stats from API
+      if (data.new_elo) setElo(data.new_elo);
+      if (data.new_streak) setStreak(data.new_streak);
+      
     } catch (error) {
       console.error("Evaluation failed:", error);
       alert("System error: Unable to connect to evaluation core.");
@@ -41,22 +62,30 @@ export default function Home() {
     setInputText("");
   };
 
+  // Corporate Ladder Ranks based on Elo
+  const getRank = (eloScore: number) => {
+    if (eloScore < 1300) return "ANALYST";
+    if (eloScore < 1500) return "SPECIALIST";
+    if (eloScore < 1800) return "TECHNICAL EXPERT";
+    return "STRATEGIST";
+  };
+
   return (
-    <div className="flex flex-col h-full p-5 flex-grow">
+    <div className={`flex flex-col h-full p-5 flex-grow ${status === 'fractured' ? 'border-2 border-amber-500' : ''}`}>
       {/* Header */}
       <header className="flex justify-between items-start py-2 border-b border-zinc-800/80 pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-zinc-100">Lexicon</h1>
-          <p className="text-xs text-zinc-500 mt-1 font-medium tracking-wide">ELO: 1200 | SPECIALIST</p>
+          <p className="text-xs text-zinc-500 mt-1 font-medium tracking-wide">ELO: {elo} | {getRank(elo)}</p>
         </div>
         <div className="flex flex-col items-end">
-          <span className="text-xs font-bold text-corporate-accent flex items-center gap-1.5 uppercase tracking-wider">
-            <Activity size={14} className="animate-pulse" />
-            Active
+          <span className={`text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider ${status === 'fractured' ? 'text-amber-500' : 'text-corporate-accent'}`}>
+            <Activity size={14} className={status === 'fractured' ? '' : 'animate-pulse'} />
+            {status}
           </span>
           <span className="text-sm text-zinc-400 mt-1 flex items-center gap-1 font-medium">
-            <Flame size={14} className="text-zinc-500" />
-            14 Days
+            <Flame size={14} className={status === 'fractured' ? 'text-amber-500' : 'text-zinc-500'} />
+            {streak} Days
           </span>
         </div>
       </header>
@@ -64,17 +93,17 @@ export default function Home() {
       {/* Main Content Area */}
       {!result ? (
         <>
-          {/* Prompt Card */}
           <div className="mt-8 p-5 bg-zinc-900 border border-zinc-800 rounded-xl shadow-lg relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-corporate-accent/5 rounded-full blur-3xl"></div>
+            <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl ${status === 'fractured' ? 'bg-amber-500/10' : 'bg-corporate-accent/5'}`}></div>
             <div className="flex justify-between items-start mb-3 relative z-10">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-corporate-accent">Daily Protocol</span>
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${status === 'fractured' ? 'text-amber-500' : 'text-corporate-accent'}`}>
+                {status === 'fractured' ? 'Restitution Protocol' : 'Daily Protocol'}
+              </span>
               <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Track A: Diagnostics</span>
             </div>
             <p className="text-sm leading-relaxed text-zinc-300 relative z-10">{scenarioText}</p>
           </div>
 
-          {/* Input Workspace */}
           <div className="mt-6 flex-grow flex flex-col relative group">
             <textarea
               className="flex-grow w-full bg-transparent border-none resize-none text-[15px] leading-relaxed outline-none placeholder:text-zinc-700 p-2 text-zinc-200 transition-all focus:placeholder:text-zinc-500"
@@ -85,7 +114,6 @@ export default function Home() {
             />
           </div>
 
-          {/* Action Bar */}
           <div className="py-4 mt-auto border-t border-zinc-800/80 bg-black pt-4">
             <button
               onClick={handleAnalyze}
@@ -97,10 +125,8 @@ export default function Home() {
           </div>
         </>
       ) : (
-        /* Evaluation Dashboard (Shows after API returns data) */
+        /* Evaluation Dashboard */
         <div className="flex-grow flex flex-col mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          
-          {/* Score & Feedback */}
           <div className="flex items-center gap-5 mb-6">
             <div className="flex flex-col items-center justify-center w-20 h-20 rounded-full border-4 border-corporate-accent/30 bg-corporate-accent/10">
               <span className="text-2xl font-black text-corporate-accent syntax-glow-success">{result.score}</span>
@@ -111,7 +137,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Vocabulary Upgrades */}
           {result.replaced_words && result.replaced_words.length > 0 && (
             <div className="mb-6 p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
               <h3 className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-3 flex items-center gap-2">
@@ -129,7 +154,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* C2 Upgraded Text */}
           <div className="mb-8">
             <h3 className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2">C2 Target Output</h3>
             <div className="p-4 bg-black border border-zinc-800 rounded-xl">
@@ -137,7 +161,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Next Action */}
           <div className="mt-auto border-t border-zinc-800/80 pt-4">
             <button
               onClick={resetProtocol}
