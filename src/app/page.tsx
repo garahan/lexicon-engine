@@ -9,14 +9,25 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   
-  // Real database stats state
   const [elo, setElo] = useState(1200);
   const [streak, setStreak] = useState(0);
   const [status, setStatus] = useState("active");
+  
+  // Dynamic Scenario State
+  const [scenarioText, setScenarioText] = useState("Loading secure protocol...");
+  const [trackName, setTrackName] = useState("SYSTEM INITIALIZATION");
 
-  const scenarioText = "A flagship device is experiencing anomalous kernel panics under specific software loads. Draft a concise executive summary for the engineering team detailing the diagnostic steps required to isolate the logic board.";
+  const fetchRandomScenario = async () => {
+    setScenarioText("Decrypting next protocol...");
+    const { data, error } = await supabase.from('scenarios').select('*');
+    if (data && data.length > 0) {
+      // Pick a random scenario from the database
+      const randomPrompt = data[Math.floor(Math.random() * data.length)];
+      setScenarioText(randomPrompt.prompt_text);
+      setTrackName(randomPrompt.track_name);
+    }
+  };
 
-  // Fetch stats when app opens
   useEffect(() => {
     async function loadStats() {
       const { data } = await supabase.from('profiles').select('*').eq('user_name', 'Admin').single();
@@ -27,6 +38,7 @@ export default function Home() {
       }
     }
     loadStats();
+    fetchRandomScenario();
   }, []);
 
   const handleAnalyze = async () => {
@@ -45,9 +57,9 @@ export default function Home() {
       const data = await response.json();
       setResult(data);
       
-      // Update UI instantly with new stats from API
       if (data.new_elo) setElo(data.new_elo);
       if (data.new_streak) setStreak(data.new_streak);
+      setStatus("active"); // Successfully completing a prompt restores a fractured streak
       
     } catch (error) {
       console.error("Evaluation failed:", error);
@@ -60,9 +72,9 @@ export default function Home() {
   const resetProtocol = () => {
     setResult(null);
     setInputText("");
+    fetchRandomScenario(); // Load a new prompt for the next round
   };
 
-  // Corporate Ladder Ranks based on Elo
   const getRank = (eloScore: number) => {
     if (eloScore < 1300) return "ANALYST";
     if (eloScore < 1500) return "SPECIALIST";
@@ -71,7 +83,7 @@ export default function Home() {
   };
 
   return (
-    <div className={`flex flex-col h-full p-5 flex-grow ${status === 'fractured' ? 'border-2 border-amber-500' : ''}`}>
+    <div className={`flex flex-col h-full p-5 flex-grow transition-colors duration-500 ${status === 'fractured' ? 'border-t-4 border-amber-500' : ''}`}>
       {/* Header */}
       <header className="flex justify-between items-start py-2 border-b border-zinc-800/80 pb-4">
         <div>
@@ -99,7 +111,7 @@ export default function Home() {
               <span className={`text-[10px] font-bold uppercase tracking-widest ${status === 'fractured' ? 'text-amber-500' : 'text-corporate-accent'}`}>
                 {status === 'fractured' ? 'Restitution Protocol' : 'Daily Protocol'}
               </span>
-              <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Track A: Diagnostics</span>
+              <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">{trackName}</span>
             </div>
             <p className="text-sm leading-relaxed text-zinc-300 relative z-10">{scenarioText}</p>
           </div>
@@ -117,7 +129,7 @@ export default function Home() {
           <div className="py-4 mt-auto border-t border-zinc-800/80 bg-black pt-4">
             <button
               onClick={handleAnalyze}
-              disabled={isSubmitting || !inputText.trim()}
+              disabled={isSubmitting || !inputText.trim() || scenarioText.includes("Decrypting")}
               className="w-full py-4 rounded-xl bg-zinc-100 text-black font-bold text-sm tracking-widest disabled:opacity-30 disabled:bg-zinc-800 disabled:text-zinc-500 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
             >
               {isSubmitting ? <span className="animate-pulse">ANALYZING SYNTAX...</span> : "SUBMIT FOR REVIEW"}
